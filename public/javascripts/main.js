@@ -1,4 +1,5 @@
-﻿jQuery(function($) {
+﻿jQuery(function ($) {
+    // This function replaces labels associated to text-inputs with a placeholder-based input
     $('label').each(function () {
         var id = $(this).attr('for');
         var $input = $('#' + id);
