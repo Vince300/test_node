@@ -1,0 +1,20 @@
+﻿.header {
+}
+
+.home-menu {
+    background: #191818;
+}
+
+.menu-content {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.content-wrapper {
+    margin-top: 3em;
+}
+
+.content {
+    max-width: 768px;
+    margin: 0 auto;
+}

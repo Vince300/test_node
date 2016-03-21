@@ -1,0 +1,30 @@
+﻿doctype html
+html
+  head
+    title= title
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width initial-scale=1')
+    script(src='//code.jquery.com/jquery-1.12.2.min.js')
+    script(src='/javascripts/main.js')
+    link(rel='stylesheet', href='//maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css')
+    link(rel='stylesheet', href='//yui.yahooapis.com/pure/0.6.0/pure-min.css')
+    
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="//yui.yahooapis.com/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+    <link rel="stylesheet" href="//yui.yahooapis.com/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    .header
+      .home-menu.pure-menu.pure-menu-horizontal.pure-menu-fixed
+        .menu-content
+          a.pure-menu-heading(href='/')
+            i.fa.fa-fw.fa-heart
+            | Test Node.js
+    .content-wrapper
+      .content
+        h1= title
+        block content

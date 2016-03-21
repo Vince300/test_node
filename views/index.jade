@@ -1,0 +1,36 @@
+﻿extends layout
+
+block content
+  p Veuillez entrer vos coordonnées ci-dessous pour vous inscrire sur le site.
+  form.pure-form.pure-form-stacked(method='post', action='/register')
+    fieldset
+      legend Coordonnées
+      .pure-g
+        .pure-u-1.pure-u-md-1-3
+          label(for='first-name') Prénom
+          input#first-name.pure-u-23-24(type='text')
+        .pure-u-1.pure-u-md-1-3
+          label(for='last-name') Nom
+          input#last-name.pure-u-23-24(type='text')
+        .pure-u-1.pure-u-md-1-3
+          label(for='age') Age
+          select#age.pure-u-23-24
+            each age_range in age_ranges
+              option(value=age_range) #{age_range} ans
+    fieldset
+      legend Préférences
+      .pure-g
+        each meal in meals
+          .pure-u-1.pure-u-md-1-3
+            label(for="meal-#{meal.id}")
+              small= meal.name
+            - var i = 0
+            each item in meal.options
+              label.pure-radio.pure-u-23-24(for="meal-#{meal.id}-option-#{i}")
+                input(id="meal-#{meal.id}-option-#{i}", type='radio', name="meal-#{meal.name}", value=item)
+                = item
+              - i++
+        .pure-u-1
+        button.pure-u-1.pure-button.pure-button-primary(type='submit')
+          i.fa.fa-fw.fa-check
+          | Enregistrer
