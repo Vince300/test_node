@@ -1,0 +1,9 @@
+﻿extends layout
+
+block content
+  p L'inscription a échoué à cause des erreurs suivantes.
+  ul
+    - console.log(errors)
+    each e in errors
+      li= e
+  a(href='/', onclick='history.back();return false') &lt; Retour

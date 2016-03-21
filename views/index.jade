@@ -8,13 +8,13 @@ block content
       .pure-g
         .pure-u-1.pure-u-md-1-3
           label(for='first-name') Prénom
-          input#first-name.pure-u-23-24(type='text')
+          input#first-name.pure-u-23-24(type='text', name='first-name')
         .pure-u-1.pure-u-md-1-3
           label(for='last-name') Nom
-          input#last-name.pure-u-23-24(type='text')
+          input#last-name.pure-u-23-24(type='text', name='last-name')
         .pure-u-1.pure-u-md-1-3
           label(for='age') Age
-          select#age.pure-u-23-24
+          select#age.pure-u-23-24(name='age')
             each age_range in age_ranges
               option(value=age_range) #{age_range} ans
     fieldset
@@ -27,10 +27,14 @@ block content
             - var i = 0
             each item in meal.options
               label.pure-radio.pure-u-23-24(for="meal-#{meal.id}-option-#{i}")
-                input(id="meal-#{meal.id}-option-#{i}", type='radio', name="meal-#{meal.name}", value=item)
+                input(id="meal-#{meal.id}-option-#{i}", type='radio', name="meal-#{meal.id}", value=i)
                 = item
               - i++
-        .pure-u-1
-        button.pure-u-1.pure-button.pure-button-primary(type='submit')
-          i.fa.fa-fw.fa-check
-          | Enregistrer
+        .pure-u-1.pure-u-md-1-2
+          button.pure-button.pure-button-primary(type='submit', name='mode', value='normal')
+            i.fa.fa-fw.fa-check
+            | Enregistrer (CSV)
+        .pure-u-1.pure-u-md-1-2
+          button.pure-button.pure-button-primary.button-success(type='submit', name='mode', value='excel')
+            i.fa.fa-fw.fa-check
+            | Enregistrer (CSV Excel)

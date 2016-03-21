@@ -18,3 +18,13 @@
     max-width: 768px;
     margin: 0 auto;
 }
+
+.button-success {
+    background: rgb(28, 184, 65); /* this is a green */
+}
+
+.pure-button {
+    width: 95%;
+    display: block;
+    margin: 0.5em auto;
+}
