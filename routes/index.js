@@ -1,6 +1,7 @@
 ﻿var express = require('express');
 var router = express.Router();
 var csv = require('fast-csv');
+var xlsx = require('xlsx-stream');
 var validator = require('validator');
 
 // List of options for the register form fields
@@ -83,18 +84,12 @@ router.post('/register', function (req, res) {
     }
     
     // Find correct delimiter
-    var delimiter = ',';
-    if (req.body['mode'] === 'excel') {
-        delimiter = ';';
-    } else if (req.body['mode'] !== 'normal') {
+    if (!validator.isIn(req.body['mode'], ['normal', 'excel'])) {
         err.push("Mode " + req.body['mode'] + " inconnu");
     }
     
     // Write CSV using form parameters
     if (err.length == 0) {
-        res.setHeader('content-type', 'text/csv');
-        res.setHeader('content-disposition', 'attachment; filename="inscription.csv"');
-        
         // Fixed data
         var data = [
             ['Nom complet', req.body['first-name'] + ' ' + req.body['last-name'].toUpperCase()],
@@ -110,8 +105,29 @@ router.post('/register', function (req, res) {
             data.push([m.name, m.options[req.body[id]]]);
         }
         
-        // Write output CSV
-        csv.write(data, { headers: true, delimiter: delimiter }).pipe(res);
+        if (req.body['mode'] === 'normal') {
+            res.setHeader('content-type', 'text/csv; charset=utf-8');
+            res.setHeader('content-disposition', 'attachment; filename="inscription.csv"');
+            
+            // Write data as CSV to the response stream
+            csv.write(data, { headers: true }).pipe(res);
+        } else /* req.body['mode'] === 'excel' */ {
+            // Create XLSX document
+            var wb = xlsx();
+
+            // Redirect data to the response stream
+            res.setHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('content-disposition', 'attachment; filename="inscription.xlsx"');
+            res.setHeader('content-transfer-encoding', 'binary');
+            wb.pipe(res);
+
+            // Write data
+            for (var i = 0; i < data.length; ++i) {
+                wb.write(data[i]);
+            }
+
+            wb.end();
+        }
     } else {
         // Render error page
         res.render('register_error', { title: 'Test Node.js', errors: err });
