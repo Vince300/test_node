@@ -1,8 +1,11 @@
 ﻿var express = require('express');
 var router = express.Router();
-var csv = require('fast-csv');
 var xlsx = require('xlsx-stream');
 var validator = require('validator');
+
+// In-memory sqlite3
+var sqlite3 = require('sqlite3');
+var db = new sqlite3.Database('data.db');
 
 // List of options for the register form fields
 var form_options = {
@@ -25,6 +28,33 @@ var form_options = {
         }
     ]
 };
+
+// Create the database with the right schema
+
+// The INSERT request string and prepared statement
+var insertRqString = "INSERT INTO users VALUES(?, ?, ?", insertRq;
+
+// The list of headers for the export
+var exportHeaders = ['Nom', 'Prénom', 'Age'];
+
+var st = "CREATE TABLE IF NOT EXISTS users (first_name VARCHAR(60), last_name VARCHAR(60), age VARCHAR(16)";
+for (var mi in form_options.meals) {
+    var m = form_options.meals[mi];
+    st += ", pref_" + m.id + " VARCHAR(60)";
+    insertRqString += ", ?";
+    exportHeaders.push(m.name + " préféré");
+}
+st += ")";
+insertRqString += ")";
+
+db.run(st, function (err, data) {
+    if (err !== null) {
+        console.log("SQLite error: " + err);
+    } else {
+        insertRq = db.prepare(insertRqString);
+    }
+});
+
 
 // Form validation data structure, based on form_options
 // This is a list of fields that must pass some validation function, and that are required
@@ -69,31 +99,19 @@ router.post('/register', function (req, res) {
     // Execute the validation process described above
     for (var k in form_validators) {
         if (req.body[k] === null) {
-            console.log("Value " + k + " missing");
             err.push(form_validators[k][0]);
         } else {
             req.body[k] = form_validators[k][1](req.body[k]);
-            console.log("Sanitized value " + k + " to '" + req.body[k] + "'");
             if (!form_validators[k][2](req.body[k])) {
-                console.log("It then did not pass validation");
                 err.push(form_validators[k][0]);
-            } else {
-                console.log("It then passed validation");
             }
         }
     }
     
-    // Find correct delimiter
-    if (!validator.isIn(req.body['mode'], ['normal', 'excel'])) {
-        err.push("Mode " + req.body['mode'] + " inconnu");
-    }
-    
-    // Write CSV using form parameters
+    // Insert into database and redirect
     if (err.length == 0) {
         // Fixed data
-        var data = [
-            ['Nom complet', req.body['first-name'] + ' ' + req.body['last-name'].toUpperCase()],
-            ['Age', req.body['age']]];
+        var data = [req.body['first-name'], req.body['last-name'], req.body['age']];
         
         // Append prefered meal data
         for (var m in form_options.meals) {
@@ -102,36 +120,57 @@ router.post('/register', function (req, res) {
             // Find the id of the corresponding input
             var id = 'meal-' + m.id;
             // Get the full string for this value
-            data.push([m.name, m.options[req.body[id]]]);
+            data.push(m.options[req.body[id]]);
         }
         
-        if (req.body['mode'] === 'normal') {
-            res.setHeader('content-type', 'text/csv; charset=utf-8');
-            res.setHeader('content-disposition', 'attachment; filename="inscription.csv"');
-            
-            // Write data as CSV to the response stream
-            csv.write(data, { headers: true }).pipe(res);
-        } else /* req.body['mode'] === 'excel' */ {
-            // Create XLSX document
-            var wb = xlsx();
-
-            // Redirect data to the response stream
-            res.setHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('content-disposition', 'attachment; filename="inscription.xlsx"');
-            res.setHeader('content-transfer-encoding', 'binary');
-            wb.pipe(res);
-
-            // Write data
-            for (var i = 0; i < data.length; ++i) {
-                wb.write(data[i]);
+        // Insert into database, redirect on success or failure
+        insertRq.run(data, function(err, ra) {
+            if (err === null) {
+                res.redirect('/export');
+            } else {
+                res.render('register_error', { title: 'Test Node.js', errors: err });
             }
-
-            wb.end();
-        }
+        });
     } else {
         // Render error page
         res.render('register_error', { title: 'Test Node.js', errors: err });
     }
+});
+
+/* GET export */
+router.get('/export', function (req, res) {
+    // Create XLSX document
+    var wb = xlsx();
+        
+    // Redirect workbook data to the response stream
+    res.setHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('content-disposition', 'attachment; filename="inscription.xlsx"');
+    res.setHeader('content-transfer-encoding', 'binary');
+    wb.pipe(res);
+    
+    // Fetch data from the users table
+    db.all('SELECT * FROM users', function(err, rows) {
+        if (err) {
+            // On error output a XLSX with the error message
+            wb.write(['Erreur', err]);
+        } else {
+            // Write headers
+            wb.write(exportHeaders);
+            
+            // Output all the rows
+            for (var i = 0; i < rows.length; ++i) {
+                console.log(rows[i]);
+                var dr = [];
+
+                for (var k in rows[i])
+                    dr.push(rows[i][k]);
+
+                wb.write(dr);
+            }
+        }
+
+        wb.end();
+    });
 });
 
 module.exports = router;
